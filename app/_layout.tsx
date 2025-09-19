@@ -3,7 +3,7 @@ import { tokenCache } from '@clerk/clerk-expo/token-cache';
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native"; // For a loading spinner
-
+import "./global.css";
 
 const AuthLayout = () => {
   const { isLoaded, isSignedIn } = useAuth();
@@ -21,7 +21,7 @@ const AuthLayout = () => {
     if (isSignedIn && !inAuthGroup) {
       // If the user is signed in and NOT in the (auth) group,
       // redirect them to the main app screen.
-      router.replace("/");
+      router.replace("/(tabs)/home");
     } else if (!isSignedIn) {
       // If the user is not signed in, redirect them to the sign-in screen.
       router.replace("/sign-in");
@@ -38,7 +38,9 @@ const AuthLayout = () => {
   }
 
   // Render the currently active route
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return <Stack>
+    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+  </Stack>;
 };
 
 export default function RootLayout() {
