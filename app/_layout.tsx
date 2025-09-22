@@ -1,55 +1,54 @@
 import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import { tokenCache } from '@clerk/clerk-expo/token-cache';
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, View } from "react-native"; // For a loading spinner
 import "./global.css";
 
-const AuthLayout = () => {
-  const { isLoaded, isSignedIn } = useAuth();
-  const segments = useSegments();
-  const router = useRouter();
+// This key is essential for Clerk to work correctly.
+const CLERK_PUBLISHABLE_KEY = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY;
 
-  useEffect(() => {
-    // Wait until Clerk is loaded to check the auth state
-    if (!isLoaded) {
-      return;
-    }
+const InitialLayout = () => {
+    const { isLoaded, isSignedIn } = useAuth();
+    const segments = useSegments();
+    const router = useRouter();
 
-    const inAuthGroup = segments[0] === "(auth)";
+    useEffect(() => {
+        // Wait until Clerk is loaded before performing any navigation actions
+        if (!isLoaded) {
+            return;
+        }
 
-    if (isSignedIn && !inAuthGroup) {
-      // If the user is signed in and NOT in the (auth) group,
-      // redirect them to the main app screen.
-      router.replace("/(tabs)/home");
-    } else if (!isSignedIn) {
-      // If the user is not signed in, redirect them to the sign-in screen.
-      router.replace("/sign-in");
-    }
-  }, [isLoaded, isSignedIn]);
+        const inTabsGroup = segments[0] === "(tabs)";
 
-  // Show a loading indicator while Clerk is loading
-  if (!isLoaded) {
+        if (isSignedIn && !inTabsGroup) {
+            // User is signed in and not in the main app.
+            // Redirect them to the main screen.
+            router.replace("/(tabs)/tasks");
+        } else if (!isSignedIn) {
+            // User is not signed in.
+            // Redirect them to the sign-in screen.
+            router.replace("/sign-in");
+        }
+    }, [isLoaded, isSignedIn]);
+
+    // The Stack navigator is ALWAYS rendered. This provides the
+    // navigation context to the entire app, preventing the error.
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
+        <Stack>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen name="sign-in" options={{ presentation: 'modal', title: 'Log In or Sign Up' }} />
+            {/* Add other auth screens like sign-up here if needed */}
+        </Stack>
     );
-  }
-
-  // Render the currently active route
-  return <Stack>
-    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-  </Stack>;
 };
 
 export default function RootLayout() {
-  return (
-    <ClerkProvider
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      tokenCache={tokenCache}
-    >
-      <AuthLayout />
-    </ClerkProvider>
-  );
+    return (
+        <ClerkProvider
+            publishableKey={CLERK_PUBLISHABLE_KEY}
+            tokenCache={tokenCache}
+        >
+            <InitialLayout />
+        </ClerkProvider>
+    );
 }
